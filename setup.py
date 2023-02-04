@@ -2,7 +2,7 @@ import os
 import sys
 
 from Cython.Build import cythonize
-from setuptools import Extension, setup, Command
+from setuptools import Extension, setup, Command, find_packages
 from setuptools.command.install import install
 from setuptools.command.build import build
 from setuptools.command.develop import develop
@@ -11,7 +11,9 @@ import tempfile
 
 INSTALL_PREFIX_WIN = "deps\\install"
 
-PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
+PACKAGE_ROOT = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "src/fcl")
 
 
 def is_nix_platform(platform):
@@ -86,6 +88,10 @@ class InstallDep(Command):
         self._install_libccd()
         self._install_octomap()
         self._install_fcl()
+        # HACK: force overwriting all RPATH to the current dir
+        subprocess.check_call(
+            f"patchelf --set-rpath '$ORIGIN' lib/*.so*",
+            cwd=PACKAGE_ROOT, shell=True)
 
     def _install_eigen(self):
         with tempfile.TemporaryDirectory() as d:
@@ -155,6 +161,8 @@ setup(
                 libraries=get_libraries(),
                 language="c++",
                 extra_compile_args=["-std=c++11"],
+                # Tell the runtime lib linker to search for this dir
+                runtime_library_dirs=['$ORIGIN/lib']
             )
         ],
     ),
@@ -162,13 +170,11 @@ setup(
               'build': Build,
               'develop': Develop,
               'install_dep': InstallDep},
-    package_data={
-        'pyfcl': [
-            os.path.join(PACKAGE_ROOT, 'include/*.h'),
-            os.path.join(PACKAGE_ROOT, 'lib/*.so')
-        ]
-    },
+    packages=find_packages(where='src'),
+    package_data={'fcl': ['lib/*.so*']},
+    package_dir={'': 'src'},
+    include_package_data=True,
     install_requires=[
         'setuptools==63.1.0'
-    ]
+    ],
 )
