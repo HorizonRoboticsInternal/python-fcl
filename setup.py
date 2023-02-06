@@ -4,7 +4,11 @@ import sys
 from Cython.Build import cythonize
 from setuptools import Extension, setup, Command, find_packages
 from setuptools.command.install import install
-from setuptools.command.build import build
+try:
+    from setuptools.command.build import build
+except:
+    import setuptools
+    raise ValueError("setuptools version too low: %s" % setuptools.__version__)
 from setuptools.command.develop import develop
 import subprocess
 import tempfile
