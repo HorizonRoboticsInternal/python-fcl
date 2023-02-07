@@ -102,8 +102,10 @@ class InstallDep(Command):
             subprocess.check_call(
                 "curl -OL https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz; "
                 "tar -zxf eigen-3.3.9.tar.gz; cd eigen-3.3.9; "
-                f"cmake -DCMAKE_INSTALL_PREFIX:PATH={PACKAGE_ROOT} -B build; "
-                "cmake --install build",
+                "mkdir build; cd build;"
+                f"cmake -DCMAKE_INSTALL_PREFIX:PATH={PACKAGE_ROOT} ..; "
+                "cmake --install build;"
+                "make install;",
                 cwd=d, shell=True)
 
     def _install_libccd(self):
